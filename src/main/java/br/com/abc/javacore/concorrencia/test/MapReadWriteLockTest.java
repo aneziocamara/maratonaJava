@@ -1,0 +1,86 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package br.com.abc.javacore.concorrencia.test;
+
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+/**
+ *
+ * @author Anezio
+ */
+class MapReadWrite{
+    private Map<String, String> map = new LinkedHashMap<>();
+    
+    public void put(String key, String value){
+        map.put(key, value);
+    }
+    
+    public Object[] allkeys(){
+        return map.keySet().toArray();
+    }
+}
+
+
+public class MapReadWriteLockTest {
+    private final static MapReadWrite mapReadWrite = new MapReadWrite();
+    private final static ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    
+    public static void main(String[] args) {
+        Thread t1 = new Thread(new Write());
+        Thread t2 = new Thread(new ReadA());
+        Thread t3 = new Thread(new ReadB());
+        t1.start();
+        t2.start();
+        t3.start();
+    }
+    
+    static class Write implements Runnable{
+
+        @Override
+        public void run() {
+            for (int i = 0; i < 100; i++) {
+                rwl.writeLock().lock();
+                try {
+                    mapReadWrite.put(String.valueOf(i), String.valueOf(i));
+                } finally {
+                    rwl.writeLock().unlock();
+                }
+            }
+        }
+        
+    }
+    static class ReadA implements Runnable{
+
+        @Override
+        public void run() {
+            for (int i = 0; i < 10; i++) {
+                rwl.readLock().lock();
+                try {
+                    System.out.println(Thread.currentThread().getName()+" "+Arrays.toString(mapReadWrite.allkeys()));
+                } finally {
+                    rwl.readLock().unlock();
+                }
+            }
+        }   
+    }
+    
+    static class ReadB implements Runnable{
+
+        @Override
+        public void run() {
+            for (int i = 0; i < 10; i++) {
+                rwl.readLock().lock();
+                try {
+                    System.out.println(Thread.currentThread().getName()+" "+Arrays.toString(mapReadWrite.allkeys()));
+                } finally {
+                    rwl.readLock().unlock();
+                }
+            }
+        } 
+    }
+}
